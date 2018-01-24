@@ -1,0 +1,36 @@
+{
+  "name": "net-cipher",
+  "version": "0.0.0",
+  "description": "a net socket cipher",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chiefbiiko/net-cipher.git"
+  },
+  "keywords": [
+    "net",
+    "socket",
+    "cipher",
+    "encryption",
+    "decryption",
+    "security",
+    "ecdhe",
+    "curve25519"
+  ],
+  "author": "Noah Anabiik Schwarz",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/chiefbiiko/net-cipher/issues"
+  },
+  "homepage": "https://github.com/chiefbiiko/net-cipher#readme",
+  "devDependencies": {
+    "tape": "^4.8.0"
+  },
+  "dependencies": {
+    "elliptic": "^6.4.0",
+    "pumpify": "^1.4.0"
+  }
+}
