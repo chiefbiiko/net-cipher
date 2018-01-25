@@ -42,11 +42,15 @@ tape('lossless roundtrip', function (t) {
 
   function onestablished (err, socket) {
     if (err) t.end(err)
-    socket.once('readable', function () {
-      var chale = socket.read().toString()
-      t.equal(chale, 'fraud world', 'cipher roundtrip')
-      t.end()
-    })
+      socket.once('data', function (chunk) {
+        t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
+        t.end()
+      })
+//    socket.once('readable', function () {
+//      var chale = socket.read().toString()
+//      t.equal(chale, 'fraud world', 'cipher roundtrip')
+//      t.end()
+//    })
   }
 
   server.listen(10000, 'localhost', function () {
