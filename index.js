@@ -1,4 +1,7 @@
-// TODO: + get rid of stream.push() after EOF error
+// TODO:
+//   + get rid of stream.push() after EOF error
+//   + use pumpify to make a single stream!!!
+//   + try multistream !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 var crypto = require('crypto')
 var net = require('net')
@@ -7,14 +10,15 @@ var EC = require('elliptic').ec
 
 var ec = new EC('curve25519')
 
-var STREAM_PUSH_AFTER_EOF = 'stream.push() after EOF'
+function createCipherDuplet (algo, pw, opts) {
+  return {
+    cipher: crypto.createCipher(algo, pw, opts),
+    decipher: crypto.createDecipher(algo, pw, opts)
+  }
+}
 
 function sha256 (buf) {
   return crypto.createHash('sha256').update(buf).digest()
-}
-
-function pbkdf2 () {
-
 }
 
 function isValid (allow, suspect) {
@@ -25,13 +29,13 @@ function isValid (allow, suspect) {
 }
 
 // opts.cipherAlgorithm: string = 'aes256'
-function createCipherGate (opts, oncipher) {
+function createCipherGate (opts, onconnection) {
   if (typeof opts === 'function') {
-    oncipher = opts
+    onconnection = opts
     opts = {}
   }
 
-  if (!oncipher) throw Error('callback is not a function')
+  if (!onconnection) throw Error('callback is not a function')
 
   // default options
   if (!opts) opts = {}
@@ -40,16 +44,12 @@ function createCipherGate (opts, oncipher) {
   function gate (socket) {
     // getting the soocket's remote address
     // var addy = socket.remoteAddress + ':' + socket.remotePort
-    // if (socket.bytesRead || blacklist.includes(addy)) return
 
     // crypto setup
     var keypair = ec.genKeyPair()
     var pubkey = Buffer.from(keypair.getPublic('binary'))
-    var encrypt
-    var decrypt
-    var pw
 
-    socket.once('readable', function readable () {
+    socket.once('readable', function () {
       // sending server's pubkey
       socket.write(pubkey)
       // getting client's pubkey
@@ -57,17 +57,12 @@ function createCipherGate (opts, oncipher) {
       // computing the shared secret
       var shared = keypair.derive(ec.keyFromPublic(otherPubkey).getPublic())
       // hashing the shared secret to a pw 4 use with symmetric encryption
-      pw = sha256(shared.toString(16))
+      var pw = sha256(shared.toString(16))
       // initialising en/decryption streams with our shared pw
-      encrypt = crypto.createCipher(opts.cipherAlgorithm, pw)
-      decrypt = crypto.createDecipher(opts.cipherAlgorithm, pw)
-      // encrypt.setAutoPadding(false)
-      // decrypt.setAutoPadding(false)
-      // hack away that nasty error
-      var pumpline = pumpify(encrypt, socket, decrypt)
+      var { cipher, decipher } = createCipherDuplet(opts.cipherAlgorithm, pw)
       // cipher
-      oncipher(null, pumpline)
-      // oncipher(null, socket)
+      onconnection(null, cipher, socket, decipher)
+      // onconnection(null, pumpify(cipher, socket, decipher))
     })
 
   }
@@ -75,20 +70,22 @@ function createCipherGate (opts, oncipher) {
   return gate
 }
 
-function cipherEstablish (socket, opts, onestablished) {
+function cipherEstablish (socket, opts, onconnect) {
   if (typeof opts === 'function') {
-    onestablished = opts
+    onconnect = opts
     opts = {}
   }
 
-  if (!onestablished) throw Error('callback is not a function')
+  if (!onconnect) throw Error('callback is not a function')
 
   // options
   if (!opts) opts = {}
   opts.cipherAlgorithm = opts.cipherAlgorithm || 'aes256'
-  // ECDHE keys
+
+  // crypto setup - ECDHE keys
   var keypair = ec.genKeyPair()
   var pubkey = Buffer.from(keypair.getPublic('binary'))
+
   // sending client's pubkey
   socket.write(pubkey)
 
@@ -101,15 +98,10 @@ function cipherEstablish (socket, opts, onestablished) {
     // hashing the shared secret to a pw 4 use with symmetric encryption
     var pw = sha256(shared.toString(16))
     // de/cipher streams
-    var encrypt = crypto.createCipher(opts.cipherAlgorithm, pw)
-    var decrypt = crypto.createDecipher(opts.cipherAlgorithm, pw)
-    // encrypt.setAutoPadding(false)
-    // decrypt.setAutoPadding(false)
-    // hacky
-    var pumpline = pumpify(encrypt, socket, decrypt)
+    var { cipher, decipher } = createCipherDuplet(opts.cipherAlgorithm, pw)
     // cipher
-    onestablished(null, pumpline)
-    // onestablished(null, socket)
+    onconnect(null, cipher, socket, decipher)
+    // onconnect(null, pumpify(cipher, socket, decipher))
   })
 
 }

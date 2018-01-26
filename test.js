@@ -6,21 +6,28 @@ var cipherEstablish = require('./index').cipherEstablish
 
 function noop () {}
 
-tape.only('encryption', function (t) {
+tape('encryption', function (t) {
 
   var gate = createCipherGate(oncipher)
   var server = net.createServer(gate)
 
-  function oncipher (err, socket) {
+  function oncipher (err, cipher, socket, decipher) {
 
-    t.false(err, 'encrypted successfully')
+    t.false(err, 'crypto successfull')
 
     server.close()
-    // how to destroy the socket w/out gettin stream.push after EOF
-    socket.end()
     socket.destroy()
     t.end()
   }
+
+  // function oncipher (err, socket) {
+  //
+  //   t.false(err, 'crypto successfull')
+  //
+  //   server.close()
+  //   socket.destroy()
+  //   t.end()
+  // }
 
   server.listen(10000, 'localhost', function () {
     var client = net.connect(10000, 'localhost', function () {
@@ -32,30 +39,51 @@ tape.only('encryption', function (t) {
 
 tape('lossless roundtrip', function (t) {
 
-  function fraud (err, socket) {
+  function onconnection (err, cipher, socket, decipher) {
     if (err) t.end(err)
-    socket.end('fraud world')
+    cipher.pipe(socket)
+    cipher.write('fraud world')
+    cipher.end()
   }
 
-  var gate = createCipherGate(fraud)
+  // function onconnection (err, socket) {
+  //   if (err) t.end(err)
+  //   socket.write('fraud world')
+  //   socket.end()
+  // }
+
+  var gate = createCipherGate(onconnection)
   var server = net.createServer(gate)
 
-  function onestablished (err, socket) {
+  function onconnect (err, cipher, socket, decipher) {
     if (err) t.end(err)
-      socket.once('data', function (chunk) {
-        t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
-        t.end()
-      })
-//    socket.once('readable', function () {
-//      var chale = socket.read().toString()
-//      t.equal(chale, 'fraud world', 'cipher roundtrip')
-//      t.end()
-//    })
+
+    socket.pipe(decipher)
+
+    decipher.once('data', function (chunk) {
+
+      t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
+
+      server.close()
+      t.end()
+    })
   }
+
+  // function onconnect (err, socket) {
+  //   if (err) t.end(err)
+  //
+  //   socket.once('data', function (chunk) {
+  //
+  //     t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
+  //
+  //     server.close()
+  //     t.end()
+  //   })
+  // }
 
   server.listen(10000, 'localhost', function () {
     var client = net.connect(10000, 'localhost', function () {
-      cipherEstablish(client, onestablished)
+      cipherEstablish(client, onconnect)
     })
   })
 
