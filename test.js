@@ -29,8 +29,8 @@ tape('encryption', function (t) {
     t.end()
   }
 
-  server.listen(10000, 'localhost', function () {
-    var client = net.connect(10000, 'localhost', function () {
+  server.listen(10000, '127.0.0.1', function () {
+    var client = net.connect(10000, '127.0.0.1', function () {
       connect(client, noop)
     })
   })
@@ -48,8 +48,7 @@ tape('lossless roundtrip', function (t) {
 
   function onconnection (err, socket) {
     if (err) t.end(err)
-    socket.write('fraud world')
-    socket.end()
+    socket.end(Buffer.from('fraud world'))
   }
 
   var gate = createGate(onconnection)
@@ -81,8 +80,8 @@ tape('lossless roundtrip', function (t) {
     })
   }
 
-  server.listen(10000, 'localhost', function () {
-    var client = net.connect(10000, 'localhost', function () {
+  server.listen(10000, '127.0.0.1', function () {
+    var client = net.connect(10000, '127.0.0.1', function () {
       connect(client, onconnect)
     })
   })

@@ -1,6 +1,7 @@
 // TODO:
 //   + get rid of stream.push() after EOF error
 //   + use multipipeto make a single stream!!!
+// onthefly cipher
 
 var crypto = require('crypto')
 var net = require('net')
@@ -14,9 +15,11 @@ function isFunc (x) {
 }
 
 function createCipherDuplet (algo, pw, opts) {
+  var cipher = crypto.createCipher(algo, pw, opts)
+  var decipher = crypto.createDecipher(algo, pw, opts)
   return {
-    cipher: crypto.createCipher(algo, pw, opts),
-    decipher: crypto.createDecipher(algo, pw, opts)
+    cipher: cipher,
+    decipher: decipher
   }
 }
 
