@@ -1,26 +1,17 @@
 var tape = require('tape')
 var net = require('net')
 
-var createCipherGate = require('./index').createCipherGate
-var cipherEstablish = require('./index').cipherEstablish
+var createGate = require('./index').createGate
+var connect = require('./index').connect
 
 function noop () {}
 
 tape('encryption', function (t) {
 
-  var gate = createCipherGate(oncipher)
+  var gate = createGate(oncipher)
   var server = net.createServer(gate)
 
-  function oncipher (err, cipher, socket, decipher) {
-
-    t.false(err, 'crypto successfull')
-
-    server.close()
-    socket.destroy()
-    t.end()
-  }
-
-  // function oncipher (err, socket) {
+  // function oncipher (err, cipher, socket, decipher) {
   //
   //   t.false(err, 'crypto successfull')
   //
@@ -29,9 +20,18 @@ tape('encryption', function (t) {
   //   t.end()
   // }
 
+  function oncipher (err, socket) {
+
+    t.false(err, 'crypto successfull')
+
+    server.close()
+    socket.destroy()
+    t.end()
+  }
+
   server.listen(10000, 'localhost', function () {
     var client = net.connect(10000, 'localhost', function () {
-      cipherEstablish(client, noop)
+      connect(client, noop)
     })
   })
 
@@ -39,40 +39,28 @@ tape('encryption', function (t) {
 
 tape('lossless roundtrip', function (t) {
 
-  function onconnection (err, cipher, socket, decipher) {
-    if (err) t.end(err)
-    cipher.pipe(socket)
-    cipher.write('fraud world')
-    cipher.end()
-  }
-
-  // function onconnection (err, socket) {
+  // function onconnection (err, cipher, socket, decipher) {
   //   if (err) t.end(err)
-  //   socket.write('fraud world')
-  //   socket.end()
+  //   cipher.pipe(socket)
+  //   cipher.write('fraud world')
+  //   cipher.end()
   // }
 
-  var gate = createCipherGate(onconnection)
-  var server = net.createServer(gate)
-
-  function onconnect (err, cipher, socket, decipher) {
+  function onconnection (err, socket) {
     if (err) t.end(err)
-
-    socket.pipe(decipher)
-
-    decipher.once('data', function (chunk) {
-
-      t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
-
-      server.close()
-      t.end()
-    })
+    socket.write('fraud world')
+    socket.end()
   }
 
-  // function onconnect (err, socket) {
+  var gate = createGate(onconnection)
+  var server = net.createServer(gate)
+
+  // function onconnect (err, cipher, socket, decipher) {
   //   if (err) t.end(err)
   //
-  //   socket.once('data', function (chunk) {
+  //   socket.pipe(decipher)
+  //
+  //   decipher.once('data', function (chunk) {
   //
   //     t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
   //
@@ -81,9 +69,21 @@ tape('lossless roundtrip', function (t) {
   //   })
   // }
 
+  function onconnect (err, socket) {
+    if (err) t.end(err)
+
+    socket.once('data', function (chunk) {
+
+      t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
+
+      server.close()
+      t.end()
+    })
+  }
+
   server.listen(10000, 'localhost', function () {
     var client = net.connect(10000, 'localhost', function () {
-      cipherEstablish(client, onconnect)
+      connect(client, onconnect)
     })
   })
 

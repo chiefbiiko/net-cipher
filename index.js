@@ -1,14 +1,17 @@
 // TODO:
 //   + get rid of stream.push() after EOF error
-//   + use pumpify to make a single stream!!!
-//   + try multistream !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//   + use multipipeto make a single stream!!!
 
 var crypto = require('crypto')
 var net = require('net')
-var pumpify = require('pumpify')
+var multipipe = require('multipipe')
 var EC = require('elliptic').ec
 
 var ec = new EC('curve25519')
+
+function isFunc (x) {
+  return x && Object.getPrototypeOf(x) === Function.prototype
+}
 
 function createCipherDuplet (algo, pw, opts) {
   return {
@@ -29,13 +32,13 @@ function isValid (allow, suspect) {
 }
 
 // opts.cipherAlgorithm: string = 'aes256'
-function createCipherGate (opts, onconnection) {
+function createGate (opts, onconnection) {
   if (typeof opts === 'function') {
     onconnection = opts
     opts = {}
   }
 
-  if (!onconnection) throw Error('callback is not a function')
+  if (!isFunc(onconnection)) throw Error('callback is not a function')
 
   // default options
   if (!opts) opts = {}
@@ -61,8 +64,8 @@ function createCipherGate (opts, onconnection) {
       // initialising en/decryption streams with our shared pw
       var { cipher, decipher } = createCipherDuplet(opts.cipherAlgorithm, pw)
       // cipher
-      onconnection(null, cipher, socket, decipher)
-      // onconnection(null, pumpify(cipher, socket, decipher))
+      // onconnection(null, cipher, socket, decipher)
+      onconnection(null, multipipe(cipher, socket, decipher))
     })
 
   }
@@ -70,13 +73,13 @@ function createCipherGate (opts, onconnection) {
   return gate
 }
 
-function cipherEstablish (socket, opts, onconnect) {
+function connect (socket, opts, onconnect) {
   if (typeof opts === 'function') {
     onconnect = opts
     opts = {}
   }
 
-  if (!onconnect) throw Error('callback is not a function')
+  if (!isFunc(onconnect)) throw Error('callback is not a function')
 
   // options
   if (!opts) opts = {}
@@ -100,13 +103,13 @@ function cipherEstablish (socket, opts, onconnect) {
     // de/cipher streams
     var { cipher, decipher } = createCipherDuplet(opts.cipherAlgorithm, pw)
     // cipher
-    onconnect(null, cipher, socket, decipher)
-    // onconnect(null, pumpify(cipher, socket, decipher))
+    // onconnect(null, cipher, socket, decipher)
+    onconnect(null, multipipe(cipher, socket, decipher))
   })
 
 }
 
 module.exports = {
-  createCipherGate: createCipherGate,
-  cipherEstablish: cipherEstablish
+  createGate: createGate,
+  connect: connect
 }
