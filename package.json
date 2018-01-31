@@ -32,6 +32,6 @@
   "dependencies": {
     "elliptic": "^6.4.0",
     "multipipe": "^2.0.1",
-    "pumpify": "^1.4.0"
+    "xor-stream-cipher": "0.0.1"
   }
 }
