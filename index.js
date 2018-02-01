@@ -4,6 +4,8 @@ var XOR = require('xor-stream-cipher')
 
 var ec = new EC('curve25519')
 
+function noop () {}
+
 function createCipherDuplet (init, algo) {
   return {
     cipher: XOR(init, algo),
@@ -11,7 +13,8 @@ function createCipherDuplet (init, algo) {
   }
 }
 
-function handshake (keypair, algo, cb) {
+function handshake (keypair, algo, onhandshake) {
+  if (!onhandshake) onhandshake = noop
   // getting other pubkey
   var otherPubkey = this.read(32)
   // computing the shared secret
@@ -23,7 +26,7 @@ function handshake (keypair, algo, cb) {
   multi.remoteAddress = this.remoteAddress
   multi.remotePort = this.remotePort
   // cipher
-  cb(null, multi)
+  onhandshake(null, multi)
 }
 
 function prehandshake (algo, onhandshake, socket) {
