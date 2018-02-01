@@ -4,7 +4,7 @@
 
 ***
 
-A simple stream cipher.
+An encryption utility for duplex streams and related fun stuff.
 
 ***
 
@@ -26,15 +26,16 @@ npm install --save net-cipher
 
 ## API
 
-### `var cipher = cipherConnection([onconnection])`
+### `var cipher = cipherConnection([oncipher])`
 
-Create a new cipher function that will encrypt any stream passed to it as first argument. Its signature is `cipher(stream[, onconnection])`, with the `onconnection` callback being mandatory only if it has not been supplied in the call of `cipherConnection`.
+Create a function that is capable of encrypting any duplex stream. Pass a function, sig `oncipher(err, duplex)`, and it will be bound to `cipher` as its callback.
+`cipher` is designed to be the very first connection handler to be used with `net.createServer`, `net.connect`, and alike.
 
-### `cipher(duplex[, onconnection])`
+### `cipher(duplex[, oncipher])`
 
-Encrypt any duplex stream, using the **ECDHE** protocol with Daniel Bernstein's `curve25519` to obtain a shared secret, which is in turn used as the seed for [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) instances that perform the actual en/decryption with a pseudo-random key stream. 
+Encrypt any duplex stream, using the **ECDHE** protocol with Daniel Bernstein's **_curve25519_** to obtain a shared secret, which is in turn used to seed [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) instances that perform the actual en/decryption with a pseudo-random key stream. 
 
-The callback has the signature `onconnection(err, duplex)` with `duplex` being the encrypted stream.
+The callback has the signature `oncipher(err, duplex)` with `duplex` being the encrypted stream. `oncipher` is required, and will only be considered, if it has **not** been passed in the call of `cipherConnection`.
 
 ***
 
