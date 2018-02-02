@@ -1,7 +1,7 @@
 {
   "name": "net-cipher",
-  "version": "0.0.0",
-  "description": "a net socket cipher",
+  "version": "0.0.1",
+  "description": "an encryption utility for duplex streams",
   "main": "index.js",
   "scripts": {
     "test": "tape test.js"
@@ -18,7 +18,9 @@
     "decryption",
     "security",
     "ecdhe",
-    "curve25519"
+    "curve25519",
+    "stream",
+    "xor"
   ],
   "author": "Noah Anabiik Schwarz",
   "license": "MIT",
@@ -32,6 +34,6 @@
   "dependencies": {
     "elliptic": "^6.4.0",
     "multipipe": "^2.0.1",
-    "xor-stream-cipher": "0.0.1"
+    "xor-stream-cipher": "^0.0.2"
   }
 }
