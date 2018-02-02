@@ -14,7 +14,6 @@ function createCipherDuplet (init, algo) {
 }
 
 function handshake (keypair, algo, onhandshake) {
-  if (!onhandshake) onhandshake = noop
   // getting other pubkey
   var otherPubkey = this.read(32)
   // computing the shared secret
@@ -25,11 +24,17 @@ function handshake (keypair, algo, onhandshake) {
   var multi = multipipe(cipher, this, decipher)
   multi.remoteAddress = this.remoteAddress
   multi.remotePort = this.remotePort
+  // unregister error trapper
+  this.removeListener('error', this.listeners('error')[0])
   // cipher
   onhandshake(null, multi)
 }
 
 function prehandshake (algo, onhandshake, socket) {
+  // allow noop cb
+  if (!onhandshake) onhandshake = noop
+  // trapping socket errors
+  socket.prependOnceListener('error', onhandshake)
   // crypto setup
   var keypair = ec.genKeyPair()
   var pubkey = Buffer.from(keypair.getPublic('binary'))
