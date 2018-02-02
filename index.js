@@ -1,3 +1,4 @@
+var crypto = require('crypto')
 var multipipe = require('multipipe')
 var EC = require('elliptic').ec
 var XOR = require('xor-stream-cipher')
@@ -5,6 +6,10 @@ var XOR = require('xor-stream-cipher')
 var ec = new EC('curve25519')
 
 function noop () {}
+
+function sha512 (buf) {
+  return crypto.createHash('sha512').update(buf).digest()
+}
 
 function createCipherDuplet (init, algo) {
   return {
@@ -18,8 +23,10 @@ function handshake (keypair, algo, onhandshake) {
   var otherPubkey = this.read(32)
   // computing the shared secret
   var shared = keypair.derive(ec.keyFromPublic(otherPubkey).getPublic())
+  // key stretching
+  var stretched = sha512(shared.toArrayLike(Buffer))
   // seeding de/cipher streams with our shared secret
-  var { cipher, decipher } = createCipherDuplet(shared, algo)
+  var { cipher, decipher } = createCipherDuplet(stretched, algo)
   // multivitamin
   var multi = multipipe(cipher, this, decipher)
   multi.remoteAddress = this.remoteAddress
