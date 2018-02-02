@@ -38,8 +38,8 @@ function oncipherconnect (err, socket) {
   socket.end('fun stuff')
 }
 
-server.listen(10000, '127.0.0.1', function () {
-  var socket = net.connect(10000, '127.0.0.1', function () {
+server.listen(419, '127.0.0.1', function () {
+  var socket = net.connect(419, '127.0.0.1', function () {
     clientCipher(socket, oncipherconnect)
   })
 })
@@ -49,9 +49,12 @@ server.listen(10000, '127.0.0.1', function () {
 
 ## API
 
-### `var cipher = cipherConnection([oncipher])`
+### `var cipher = cipherConnection([algo][, oncipher])`
 
-Create a function that is capable of encrypting any duplex stream. Pass a function, sig `oncipher(err, duplex)`, and it will be bound to `cipher` as its callback.
+Create a function that is capable of encrypting any duplex stream.
+
+`algo` indicates the algorithm to use for the random number generator of the internal [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) instances, defaults to `'alea'`. Check out  [`seedrandom`](https://github.com/davidbau/seedrandom#other-fast-prng-algorithms) for a list of supported algorithms. Pass a function, sig `oncipher(err, duplex)`, and it will be bound to `cipher` as its callback.
+
 `cipher` is designed to be the very first connection handler to be used with `net.createServer`, `net.connect`, and alike.
 
 ### `cipher(duplex[, oncipher])`

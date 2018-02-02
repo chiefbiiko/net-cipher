@@ -1,6 +1,6 @@
 {
   "name": "net-cipher",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "an encryption utility for duplex streams",
   "main": "index.js",
   "scripts": {

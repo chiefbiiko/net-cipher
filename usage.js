@@ -17,8 +17,8 @@ function oncipherconnect (err, socket) {
   socket.end('fun stuff')
 }
 
-server.listen(10000, '127.0.0.1', function () {
-  var socket = net.connect(10000, '127.0.0.1', function () {
+server.listen(419, '127.0.0.1', function () {
+  var socket = net.connect(419, '127.0.0.1', function () {
     clientCipher(socket, oncipherconnect)
   })
 })
