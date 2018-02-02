@@ -47,15 +47,15 @@ tape('error trapper', function (t) {
 
 tape('lossless roundtrip', function (t) {
 
-  function onservercipher (err, socket) {
+  function oncipherconnection (err, socket) {
     if (err) t.end(err)
     socket.end(Buffer.from('fraud world'))
   }
 
-  var server = net.createServer(cipherConnection(onservercipher))
+  var server = net.createServer(cipherConnection(oncipherconnection))
   var clientCipher = cipherConnection()
 
-  function onclientcipher (err, socket) {
+  function oncipherconnect (err, socket) {
     if (err) t.end(err)
     socket.once('data', function (chunk) {
       t.equal(chunk.toString(), 'fraud world', 'cipher roundtrip')
@@ -66,7 +66,7 @@ tape('lossless roundtrip', function (t) {
 
   server.listen(10000, '127.0.0.1', function () {
     var socket = net.connect(10000, '127.0.0.1', function () {
-      clientCipher(socket, onclientcipher)
+      clientCipher(socket, oncipherconnect)
     })
   })
 
@@ -74,7 +74,7 @@ tape('lossless roundtrip', function (t) {
 
 tape('address properties', function (t) {
 
-  function onservercipher (err, socket) {
+  function oncipherconnection (err, socket) {
     if (err) t.end(err)
     t.ok(socket.remoteAddress, 'remote address')
     t.ok(socket.remotePort, 'remote port')
@@ -83,7 +83,7 @@ tape('address properties', function (t) {
     t.end()
   }
 
-  var server = net.createServer(cipherConnection(onservercipher))
+  var server = net.createServer(cipherConnection(oncipherconnection))
   var clientCipher = cipherConnection()
 
   server.listen(10000, '127.0.0.1', function () {
