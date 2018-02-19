@@ -4,7 +4,7 @@
 
 ***
 
-An encryption utility for duplex streams and related fun stuff.
+An encryption utility for `net` servers and clients. Features message authentication.
 
 ***
 
@@ -49,17 +49,29 @@ server.listen(419, '127.0.0.1', function () {
 
 ## API
 
-### `var cipher = cipherConnection([algo][, oncipher])`
+### `var cipher = cipherConnection([opts][, oncipher])`
 
-Create a function that is capable of encrypting any duplex stream.
+Create a function that is capable of encrypting and authenticating any duplex stream.
 
-`algo` indicates the algorithm to use for the random number generator of the internal [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) instances, defaults to `'alea'`. Check out  [`seedrandom`](https://github.com/davidbau/seedrandom#other-fast-prng-algorithms) for a list of supported algorithms. Pass a function, sig `oncipher(err, duplex)`, and it will be bound to `cipher` as its callback.
+Options default to:
 
-`cipher` is designed to be the very first connection handler to be used with `net.createServer`, `net.connect`, and alike.
+``` js
+{
+  algo: 'alea',
+  mac: true,
+  delimiter: Buffer.from([ 0x00, 0x04, 0x01, 0x09, 0x04, 0x01, 0x09, 0x00 ])
+}
+```
+
+`opts.algo` indicates the algorithm to use as the random number generator for the keystreams of internal [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) and [`siphash24-stream`](https://github.com/chiefbiiko/siphash24-stream) instances, defaults to `'alea'`. Check out  [`seedrandom`](https://github.com/davidbau/seedrandom#other-fast-prng-algorithms) for a list of supported algorithms. `opts.mac` indicates whether to incorporate a message authentication check via [`siphash24-stream`](https://github.com/chiefbiiko/siphash24-stream). `opts.delimiter` indicates the message boundary to use for the (optional) message authentication procedure, must be a buffer.
+
+Optionally, pass a function, sig `oncipher(err, duplex)`, and it will be bound to `cipher` as its callback.
+
+The returned function, `cipher`, is designed to be the very first connection handler to be used with `net.createServer`, `net.connect`, and alike.
 
 ### `cipher(duplex[, oncipher])`
 
-Encrypt any duplex stream, using the **ECDHE** protocol with Daniel Bernstein's **_curve25519_** to obtain a shared secret, which is in turn used to seed [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) instances that perform the actual en/decryption with a pseudo-random key stream.
+Encrypt any duplex stream by using the **ECDHE** protocol with Daniel Bernstein's **_curve25519_** to obtain a shared secret, which is in turn used to seed pseudo-random keystreams of [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) and [`siphash24-stream`](https://github.com/chiefbiiko/siphash24-stream) instances that perform the actual en/decryption and message authentication.
 
 The callback has the signature `oncipher(err, duplex)` with `duplex` being the encrypted stream. `oncipher` is required, and will only be considered, if it has **not** been passed in the call of `cipherConnection`.
 
