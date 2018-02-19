@@ -34,6 +34,7 @@
   "dependencies": {
     "elliptic": "^6.4.0",
     "multipipe": "^2.0.1",
+    "siphash24-stream": "^0.1.1",
     "xor-stream-cipher": "^0.0.2"
   }
 }

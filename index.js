@@ -2,6 +2,7 @@ var crypto = require('crypto')
 var multipipe = require('multipipe')
 var EC = require('elliptic').ec
 var XOR = require('xor-stream-cipher')
+var sip = require('siphash24-stream')
 
 var ec = new EC('curve25519')
 
@@ -18,7 +19,7 @@ function createCipherDuplet (init, algo) {
   }
 }
 
-function handshake (keypair, algo, onhandshake) {
+function handshake (keypair, opts, onhandshake) {
   // getting other pubkey
   var otherPubkey = this.read(32)
   // computing the shared secret
@@ -26,9 +27,18 @@ function handshake (keypair, algo, onhandshake) {
   // key stretching
   var stretched = sha512(shared.toArrayLike(Buffer))
   // seeding de/cipher streams with our shared secret
-  var { cipher, decipher } = createCipherDuplet(stretched, algo)
-  // multivitamin
-  var multi = multipipe(cipher, this, decipher)
+  var { cipher, decipher } = createCipherDuplet(stretched, opts.algo)
+  // multivitamin - multiple duplex streams combined
+  var multi
+  // maybe do a message authentication check
+  if (opts.mac) { // encrypt-then-mac
+    var { sign, verify } = sip.createSipHash24Streams(stretched, opts)
+    multi = multipipe(cipher, sign, this, verify, decipher)
+    verify.on('dropping', multi.emit.bind(multi, 'dropping')) // pass da event
+  } else {
+    multi = multipipe(cipher, this, decipher)
+  }
+  // pass socket's address info
   multi.remoteAddress = this.remoteAddress
   multi.remotePort = this.remotePort
   // unregister error trapper
@@ -37,7 +47,7 @@ function handshake (keypair, algo, onhandshake) {
   onhandshake(null, multi)
 }
 
-function prehandshake (algo, onhandshake, socket) {
+function prehandshake (opts, onhandshake, socket) {
   // allow noop cb
   if (!onhandshake) onhandshake = noop
   // trapping socket errors
@@ -48,21 +58,26 @@ function prehandshake (algo, onhandshake, socket) {
   // sending own pubkey
   socket.write(pubkey)
   // handshaking
-  socket.once('readable', handshake.bind(socket, keypair, algo, onhandshake))
+  socket.once('readable', handshake.bind(socket, keypair, opts, onhandshake))
 }
 
-function clientprehandshake (algo, socket, onhandshake) {
-  prehandshake(algo, onhandshake, socket)
+function clientprehandshake (opts, socket, onhandshake) {
+  prehandshake(opts, onhandshake, socket)
 }
 
-function cipherConnection (algo, onhandshake) {
-  if (typeof algo === 'function') {
-    onhandshake = algo
-    algo = 'alea'
+function cipherConnection (opts, onhandshake) {
+  if (typeof opts === 'function') {
+    onhandshake = opts
+    opts = {}
   }
 
-  if (onhandshake) return prehandshake.bind(null, algo, onhandshake)
-  else return clientprehandshake.bind(null, algo)
+  if (!opts) opts = {}
+
+  opts.algo = opts.algo || 'alea'
+  opts.mac = opts.mac !== false
+
+  if (onhandshake) return prehandshake.bind(null, opts, onhandshake)
+  else return clientprehandshake.bind(null, opts)
 }
 
 module.exports = cipherConnection
