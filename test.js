@@ -17,8 +17,8 @@ tape('encryption', function (t) {
   var server = net.createServer(cipherConnection(oncipher))
   var clientCipher = cipherConnection()
 
-  server.listen(419, '127.0.0.1', function () {
-    var socket = net.connect(419, '127.0.0.1', function () {
+  server.listen(10419, '127.0.0.1', function () {
+    var socket = net.connect(10419, '127.0.0.1', function () {
       clientCipher(socket, function (err, socket) {
         if (err) t.end(err)
       })
@@ -37,8 +37,8 @@ tape('error trapper', function (t) {
 
   var server = net.createServer(cipherConnection(oncipher))
 
-  server.listen(419, '127.0.0.1', function () {
-    var socket = net.connect(419, '127.0.0.1', function () {
+  server.listen(10419, '127.0.0.1', function () {
+    var socket = net.connect(10419, '127.0.0.1', function () {
       socket.destroy()
     })
   })
@@ -64,8 +64,8 @@ tape('lossless roundtrip', function (t) {
     })
   }
 
-  server.listen(419, '127.0.0.1', function () {
-    var socket = net.connect(419, '127.0.0.1', function () {
+  server.listen(10419, '127.0.0.1', function () {
+    var socket = net.connect(10419, '127.0.0.1', function () {
       clientCipher(socket, oncipherconnect)
     })
   })
@@ -86,8 +86,8 @@ tape('address properties', function (t) {
   var server = net.createServer(cipherConnection(oncipherconnection))
   var clientCipher = cipherConnection()
 
-  server.listen(419, '127.0.0.1', function () {
-    var socket = net.connect(419, '127.0.0.1', function () {
+  server.listen(10419, '127.0.0.1', function () {
+    var socket = net.connect(10419, '127.0.0.1', function () {
       clientCipher(socket, noop)
     })
   })
