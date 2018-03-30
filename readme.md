@@ -4,7 +4,7 @@
 
 ***
 
-An encryption utility for `net` servers and clients. Features message authentication.
+An encryption utility for `net` servers and clients, generally node duplex streams. Features message authentication.
 
 ***
 
