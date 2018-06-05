@@ -4,8 +4,6 @@ var EC = require('elliptic').ec
 var XOR = require('xor-stream-cipher')
 var sip = require('siphash24-stream')
 
-var ec = new EC('curve25519')
-
 function noop () {}
 
 function sha512 (buf) {
@@ -14,12 +12,12 @@ function sha512 (buf) {
 
 function createCipherDuplet (init, algo) {
   return {
-    cipher: XOR(init, algo),
-    decipher: XOR(init, algo)
+    cipher: new XOR(init, algo),
+    decipher: new XOR(init, algo)
   }
 }
 
-function handshake (keypair, opts, onhandshake) {
+function handshake (ec, keypair, opts, onhandshake) {
   // getting other pubkey
   var otherPubkey = this.read(32)
   // computing the shared secret
@@ -53,15 +51,17 @@ function prehandshake (opts, onhandshake, socket) {
   // trapping socket errors
   socket.prependOnceListener('error', onhandshake)
   // crypto setup
+  var ec = new EC('curve25519')
   var keypair = ec.genKeyPair()
   var pubkey = Buffer.from(keypair.getPublic('binary'))
   // sending own pubkey
   socket.write(pubkey)
   // handshaking
-  socket.once('readable', handshake.bind(socket, keypair, opts, onhandshake))
+  socket.once('readable', 
+    handshake.bind(socket, ec, keypair, opts, onhandshake))
 }
 
-function clientprehandshake (opts, socket, onhandshake) {
+function freehandshake (opts, socket, onhandshake) {
   prehandshake(opts, onhandshake, socket)
 }
 
@@ -77,7 +77,7 @@ function cipherConnection (opts, onhandshake) {
   opts.mac = opts.mac !== false
 
   if (onhandshake) return prehandshake.bind(null, opts, onhandshake)
-  else return clientprehandshake.bind(null, opts)
+  else return freehandshake.bind(null, opts)
 }
 
 module.exports = cipherConnection
