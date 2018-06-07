@@ -68,7 +68,7 @@ var socket = net.connect(419, '127.0.0.1', function () {
 
 ## API
 
-### `var cipher = cipherConnection([opts][, oncipher])`
+### `var cipher = cipherConnection([opts][, oncipher(err, duplex)])`
 
 Create a function that is capable of encrypting and authenticating any duplex stream.
 
@@ -88,7 +88,7 @@ Optionally, pass a function, sig `oncipher(err, duplex)`, and it will be bound t
 
 The returned function, `cipher`, is designed to be the very first connection handler to be used with `net.createServer`, `net.connect`, and alike.
 
-### `cipher(duplex[, oncipher])`
+### `cipher(duplex[, oncipher(err, duplex)])`
 
 Encrypt any duplex stream by using the **ECDHE** protocol with Daniel Bernstein's **_curve25519_** to obtain a shared secret, which is in turn used to seed pseudo-random keystreams of [`xor-stream-cipher`](https://github.com/chiefbiiko/xor-stream-cipher) and [`siphash24-stream`](https://github.com/chiefbiiko/siphash24-stream) instances that perform the actual en/decryption and message authentication.
 
