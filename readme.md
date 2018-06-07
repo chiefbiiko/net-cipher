@@ -18,30 +18,49 @@ npm install --save net-cipher
 
 ## Usage
 
+The `usage` directory contains an example server and client that demonstrate how to establish an encrypted and authenticated TCP connection.
+
+### Server
+
+Run `node ./usage/server` to start the demo server below.
+
 ``` js
 var net = require('net')
 var cipherConnection = require('net-cipher')
 
 var server = net.createServer(cipherConnection(oncipherconnection))
-var clientCipher = cipherConnection()
 
 function oncipherconnection (err, socket) {
   if (err) return console.error(err)
   socket.once('data', function ondata (chunk) {
-    console.log(chunk.toString()) // fun stuff
+    console.log(chunk.toString()) // prints whatever the client sent
     server.close()
   })
 }
+
+server.listen(419, '127.0.0.1', function () {
+  var addy = server.address()
+  console.log('server live @ ' + addy.address + ':' + addy.port)
+})
+```
+
+### Client
+
+Then, run `node ./usage/client` to connect to the demo server with the client below.
+
+``` js
+var net = require('net')
+var cipherConnection = require('net-cipher')
+
+var clientCipher = cipherConnection()
 
 function oncipherconnect (err, socket) {
   if (err) return console.error(err)
   socket.end('fun stuff')
 }
 
-server.listen(419, '127.0.0.1', function () {
-  var socket = net.connect(419, '127.0.0.1', function () {
-    clientCipher(socket, oncipherconnect)
-  })
+var socket = net.connect(419, '127.0.0.1', function () {
+  clientCipher(socket, oncipherconnect)
 })
 ```
 

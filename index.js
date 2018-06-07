@@ -1,13 +1,13 @@
-var crypto = require('crypto')
+var { createHash } = require('crypto')
 var multipipe = require('multipipe')
 var EC = require('elliptic').ec
 var XOR = require('xor-stream-cipher')
-var sip = require('siphash24-stream')
+var { createSipHash24Streams } = require('siphash24-stream')
 
 function noop () {}
 
 function sha512 (buf) {
-  return crypto.createHash('sha512').update(buf).digest()
+  return createHash('sha512').update(buf).digest()
 }
 
 function createCipherDuplet (init, algo) {
@@ -30,7 +30,7 @@ function handshake (ec, keypair, opts, onhandshake) {
   var multi
   // maybe do a message authentication check
   if (opts.mac) { // encrypt-then-mac
-    var { sign, verify } = sip.createSipHash24Streams(stretched, opts)
+    var { sign, verify } = createSipHash24Streams(stretched, opts)
     multi = multipipe(cipher, sign, this, verify, decipher)
     verify.on('dropping', multi.emit.bind(multi, 'dropping')) // pass da event
   } else {
@@ -57,7 +57,7 @@ function prehandshake (opts, onhandshake, socket) {
   // sending own pubkey
   socket.write(pubkey)
   // handshaking
-  socket.once('readable', 
+  socket.once('readable',
     handshake.bind(socket, ec, keypair, opts, onhandshake))
 }
 
@@ -72,7 +72,6 @@ function cipherConnection (opts, onhandshake) {
   }
 
   if (!opts) opts = {}
-
   opts.algo = opts.algo || 'alea'
   opts.mac = opts.mac !== false
 
