@@ -4,8 +4,6 @@ var EC = require('elliptic').ec
 var XOR = require('xor-stream-cipher')
 var { createSipHash24Streams } = require('siphash24-stream')
 
-function noop () {}
-
 function sha512 (buf) {
   return createHash('sha512').update(buf).digest()
 }
@@ -46,8 +44,6 @@ function handshake (ec, keypair, opts, onhandshake) {
 }
 
 function prehandshake (opts, onhandshake, socket) {
-  // allow noop cb
-  if (!onhandshake) onhandshake = noop
   // trapping socket errors
   socket.prependOnceListener('error', onhandshake)
   // crypto setup
