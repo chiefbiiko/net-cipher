@@ -1,14 +1,18 @@
 # net-cipher
 
+❌ Beware `0xBAADC0DE`! The "crypto" applied within this module has serious flaws. ❌
+
 [![build status](http://img.shields.io/travis/chiefbiiko/net-cipher.svg?style=flat)](http://travis-ci.org/chiefbiiko/net-cipher) [![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/github/chiefbiiko/net-cipher?branch=master&svg=true)](https://ci.appveyor.com/project/chiefbiiko/net-cipher)
 
 ***
 
-An encryption utility for `net` servers and clients, generally node duplex streams. Features message authentication.
+~~An encryption utility for `net` servers and clients, generally node duplex streams. Features message authentication.~~
+
+Before using this in any setting that requires secure encryption, reimplement the encryption keystreaming part of this module.
 
 ***
 
-## Get it!
+## Installation
 
 ```
 npm install --save net-cipher
